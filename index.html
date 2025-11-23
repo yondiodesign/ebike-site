@@ -1253,6 +1253,12 @@
             return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
         }
 
+        function calculateTotal() {
+            const subtotal = getTotal();
+            const tax = subtotal * 0.08; // 8% tax
+            return subtotal + tax;
+        }
+
         function openCart() {
             renderCart();
             document.getElementById('cartModal').classList.add('active');
