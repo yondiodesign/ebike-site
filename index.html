@@ -1,0 +1,2245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VOLT-SPEED - Complete E-Bike Shop</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <!-- Stripe.js -->
+    <script src="https://js.stripe.com/v3/"></script>
+    
+    <style>
+        /* Page visibility control */
+        .page-section {
+            display: none;
+        }
+        .page-section.active {
+            display: block;
+        }
+        
+        /* Product Page Styles */
+        .product-page {
+            min-height: 100vh;
+            padding-top: 90px;
+            background: linear-gradient(180deg, #0a0118 0%, #1a0a2e 50%, #0a0118 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-page::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(0, 240, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 0, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .product-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 3rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: start;
+            position: relative;
+            z-index: 1;
+        }
+
+        .product-visual {
+            position: relative;
+            height: calc(100vh - 200px);
+            max-height: 500px;
+            background: rgba(26, 10, 46, 0.4);
+            backdrop-filter: blur(20px);
+            border: 3px solid rgba(0, 240, 255, 0.3);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .product-visual::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.05), rgba(255, 0, 255, 0.05));
+            pointer-events: none;
+        }
+
+        #productBikeCanvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+        }
+
+        .product-info {
+            color: var(--text-white);
+        }
+
+        .product-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
+            color: var(--text-white);
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-radius: 50px;
+            margin-bottom: 1rem;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+        }
+
+        .product-name {
+            font-size: 3rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .product-tagline {
+            font-size: 1.125rem;
+            color: var(--text-gray);
+            margin-bottom: 1.25rem;
+        }
+
+        .product-price {
+            font-size: 2.25rem;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            margin-bottom: 1.5rem;
+            text-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+        }
+
+        .product-description {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-gray);
+            margin-bottom: 1.5rem;
+        }
+
+        .product-specs {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-top: 2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .spec-item {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 1.25rem;
+            border-radius: 12px;
+            border: 2px solid rgba(0, 240, 255, 0.2);
+            transition: all 0.3s;
+        }
+
+        .spec-item:hover {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+        }
+
+        .spec-label {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+
+        .spec-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--neon-cyan);
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 0;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            min-width: 200px;
+            max-width: 300px;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-pink) 100%);
+            border: none;
+            color: var(--text-white);
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            clip-path: polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%);
+            transition: all 0.3s;
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 40px rgba(0, 240, 255, 0.6);
+        }
+
+        .btn-secondary {
+            padding: 1.25rem 2.5rem;
+            background: transparent;
+            border: 3px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            font-size: 1.125rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            clip-path: polygon(8% 0%, 100% 0%, 92% 100%, 0% 100%);
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 240, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--neon-cyan);
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .back-link:hover {
+            gap: 0.75rem;
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        .features-list {
+            list-style: none;
+            padding: 0;
+            margin: 2rem 0;
+        }
+
+        .features-list li {
+            padding: 0.75rem 0;
+            padding-left: 2rem;
+            position: relative;
+            color: var(--text-gray);
+            font-size: 1.125rem;
+        }
+
+        .features-list li::before {
+            content: '⚡';
+            position: absolute;
+            left: 0;
+            color: var(--neon-cyan);
+            font-size: 1.25rem;
+        }
+
+        /* Cart Empty/Content Show Classes */
+        .empty-cart {
+            display: none;
+        }
+        
+        .empty-cart.show {
+            display: flex;
+        }
+        
+        .cart-content {
+            display: none;
+        }
+        
+        .cart-content.show {
+            display: flex;
+        }
+
+        /* Checkout Styles */
+        .checkout-page {
+            min-height: 100vh;
+            padding-top: 90px;
+            background: linear-gradient(180deg, #0a0118 0%, #1a0a2e 50%, #0a0118 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .checkout-page::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(0, 240, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 0, 255, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .checkout-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 3rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .checkout-section {
+            background: rgba(26, 10, 46, 0.4);
+            backdrop-filter: blur(20px);
+            border: 3px solid rgba(0, 240, 255, 0.3);
+            border-radius: 20px;
+            padding: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 0.05em;
+            margin-bottom: 1.5rem;
+        }
+
+        .order-summary {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 240, 255, 0.2);
+        }
+
+        .order-item-info {
+            flex: 1;
+        }
+
+        .order-item-name {
+            font-weight: 700;
+            color: var(--text-white);
+            margin-bottom: 0.25rem;
+        }
+
+        .order-item-qty {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+        }
+
+        .order-item-price {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--neon-cyan);
+        }
+
+        .order-total-section {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid rgba(0, 240, 255, 0.3);
+        }
+
+        .order-total-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            color: var(--text-gray);
+        }
+
+        .order-total-line.total {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-white);
+            margin-top: 0.5rem;
+        }
+
+        .order-total-line.total .amount {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+        }
+
+        .payment-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text-white);
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.05em;
+        }
+
+        .form-input {
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(0, 240, 255, 0.3);
+            border-radius: 8px;
+            color: var(--text-white);
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+        }
+
+        #card-element {
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(0, 240, 255, 0.3);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        #card-element.StripeElement--focus {
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+        }
+
+        #card-errors {
+            color: #ff0064;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            min-height: 20px;
+        }
+
+        .btn-pay {
+            padding: 1.25rem 2.5rem;
+            background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-pink) 100%);
+            border: none;
+            color: var(--text-white);
+            font-size: 1.125rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s;
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.4);
+            width: 100%;
+        }
+
+        .btn-pay:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 0 40px rgba(0, 240, 255, 0.6);
+        }
+
+        .btn-pay:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .test-cards {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(0, 240, 255, 0.05);
+            border: 1px solid rgba(0, 240, 255, 0.2);
+            border-radius: 8px;
+        }
+
+        .test-cards h4 {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--neon-cyan);
+            text-transform: uppercase;
+            margin-bottom: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+
+        .test-cards ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .test-cards li {
+            font-size: 0.75rem;
+            color: var(--text-gray);
+            margin-bottom: 0.5rem;
+            padding-left: 1rem;
+            position: relative;
+        }
+
+        .test-cards li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--neon-cyan);
+        }
+
+        .success-message {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .success-message.show {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: scaleIn 0.5s ease-out;
+        }
+
+        .success-icon svg {
+            width: 60px;
+            height: 60px;
+            color: white;
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0); }
+            to { transform: scale(1); }
+        }
+
+        .success-message h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .success-message p {
+            color: var(--text-gray);
+            font-size: 1.125rem;
+        }
+
+        @media (max-width: 968px) {
+            .product-container,
+            .checkout-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .product-visual {
+                height: 400px;
+            }
+
+            .product-name {
+                font-size: 2.5rem;
+            }
+
+            .product-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <button class="hamburger-btn" aria-label="Menu">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+            <div class="logo">
+                <canvas id="logo3DCanvas" class="logo-3d"></canvas>
+                <span class="logo-text">VOLT-SPEED</span>
+            </div>
+            <div class="nav-icons">
+                <button class="icon-btn" aria-label="Account">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="8" r="5"/>
+                        <path d="M20 21a8 8 0 1 0-16 0"/>
+                    </svg>
+                </button>
+                <button class="icon-btn cart-btn" aria-label="Cart">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <path d="M16 10a4 4 0 0 1-8 0"/>
+                    </svg>
+                    <span class="cart-badge" style="display: none;">0</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Slide-out Menu -->
+    <div class="slide-menu">
+        <div class="slide-menu-content">
+            <a href="#" onclick="showHomePage(); closeMenu(); return false;" class="slide-menu-link">Home</a>
+            <a href="#shop" onclick="closeMenu()" class="slide-menu-link">Shop</a>
+            <a href="#" onclick="showProductPage(); closeMenu(); return false;" class="slide-menu-link">Product</a>
+        </div>
+    </div>
+    <div class="menu-overlay"></div>
+
+    <!-- HOME PAGE -->
+    <div id="homePage" class="page-section active">
+        <!-- Hero Section -->
+        <section class="hero" id="hero">
+            <div class="hero-background"></div>
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">
+                        VELOCITY<br>REFINED
+                    </h1>
+                    <p class="hero-subtitle">
+                        Experience the <span class="text-cyan">future</span> of <span class="text-cyan">speed</span>.
+                    </p>
+                    <a href="#" onclick="showProductPage(); return false;" class="cta-btn">
+                        DISCOVER PERFORMANCE
+                    </a>
+                </div>
+                <div class="hero-image">
+                    <canvas id="bikeCanvas"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Showcase Section -->
+        <section class="showcase" id="shop">
+            <div class="showcase-background">
+                <div class="city-silhouette"></div>
+                <div class="grid-floor"></div>
+                <div class="floating-particles"></div>
+                <div class="gradient-glow"></div>
+            </div>
+            <div class="showcase-content">
+                <h2 class="showcase-title">DISCOVER OUR LATEST INNOVATIONS</h2>
+                <div class="carousel-3d-container">
+                    <button class="carousel-arrow-3d prev-arrow-3d" aria-label="Previous">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                    </button>
+                    <canvas id="showcase3DCanvas"></canvas>
+                    <button class="carousel-arrow-3d next-arrow-3d" aria-label="Next">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                            <path d="M9 18l6-6-6-6"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="product-cards-container">
+                    <div class="product-card active" data-index="0">
+                        <div class="card-glow"></div>
+                        <h3 class="card-title">ELECTRIC PIT BIKE</h3>
+                        <p class="card-company">Volt-Speed Performance Series</p>
+                        <p class="card-description">Unleash off-road power with our high-performance electric pit bike. Designed for extreme terrain and maximum thrills.</p>
+                        <button class="card-cta">
+                            <span>LEARN MORE</span>
+                        </button>
+                    </div>
+                    <div class="product-card" data-index="1">
+                        <div class="card-glow"></div>
+                        <h3 class="card-title">ELECTRIC MOTO</h3>
+                        <p class="card-company">Volt-Speed Urban Collection</p>
+                        <p class="card-description">Experience the future of urban mobility. Sleek design meets cutting-edge electric technology for the modern rider.</p>
+                        <button class="card-cta" onclick="showProductPage()">
+                            <span>LEARN MORE</span>
+                        </button>
+                    </div>
+                    <div class="product-card" data-index="2">
+                        <div class="card-glow"></div>
+                        <h3 class="card-title">ELECTRIC PEDAL BIKE</h3>
+                        <p class="card-company">Volt-Speed Eco Series</p>
+                        <p class="card-description">Sustainable commuting redefined. Pedal-assist technology combined with elegant design for the eco-conscious rider.</p>
+                        <button class="card-cta">
+                            <span>LEARN MORE</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testimonials Section -->
+        <section class="testimonials" id="testimonials">
+            <div class="testimonials-background">
+                <div class="starfield"></div>
+                <div class="neon-rays"></div>
+            </div>
+            <div class="testimonials-content">
+                <h2 class="testimonials-title">
+                    <span class="title-outlined">VOICES OF</span><br>
+                    <span class="title-gradient">VOLT-SPEED</span>
+                </h2>
+                <div class="testimonial-cards">
+                    <div class="testimonial-card blue-card">
+                        <div class="quote-icon blue-quote">
+                            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 18c0-3.3 2.7-6 6-6h2v8h-4v8h8v-8c0-4.4-3.6-8-8-8h-2c-4.4 0-8 3.6-8 8v12h6v-14z"/>
+                                <path d="M32 18c0-3.3 2.7-6 6-6h2v8h-4v8h8v-8c0-4.4-3.6-8-8-8h-2c-4.4 0-8 3.6-8 8v12h6v-14z"/>
+                            </svg>
+                        </div>
+                        <p class="testimonial-text">
+                            This e-moto transformed my commute! Powerful, sleek, and the battery lasts forever. Absolutely thrilling to ride!
+                        </p>
+                        <div class="star-rating blue-stars">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        </div>
+                        <div class="reviewer">
+                            <div class="reviewer-avatar"></div>
+                            <div class="reviewer-info">
+                                <p class="reviewer-name">Alex R.</p>
+                                <p class="reviewer-product">Owns: Sentinel E-Moto</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="testimonial-card pink-card">
+                        <div class="quote-icon pink-quote">
+                            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 18c0-3.3 2.7-6 6-6h2v8h-4v8h8v-8c0-4.4-3.6-8-8-8h-2c-4.4 0-8 3.6-8 8v12h6v-14z"/>
+                                <path d="M32 18c0-3.3 2.7-6 6-6h2v8h-4v8h8v-8c0-4.4-3.6-8-8-8h-2c-4.4 0-8 3.6-8 8v12h6v-14z"/>
+                            </svg>
+                        </div>
+                        <p class="testimonial-text">
+                            Best investment I've made! The acceleration is insane and it's so quiet. Turning heads everywhere I go!
+                        </p>
+                        <div class="star-rating pink-stars">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        </div>
+                        <div class="reviewer">
+                            <div class="reviewer-avatar"></div>
+                            <div class="reviewer-info">
+                                <p class="reviewer-name">Jordan K.</p>
+                                <p class="reviewer-product">Owns: Velocity E-Moto</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="testimonial-card blue-card">
+                        <div class="quote-icon blue-quote">
+                            <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 18c0-3.3 2.7-6 6-6h2v8h-4v8h8v-8c0-4.4-3.6-8-8-8h-2c-4.4 0-8 3.6-8 8v12h6v-14z"/>
+                                <path d="M32 18c0-3.3 2.7-6 6-6h2v8h-4v8h8v-8c0-4.4-3.6-8-8-8h-2c-4.4 0-8 3.6-8 8v12h6v-14z"/>
+                            </svg>
+                        </div>
+                        <p class="testimonial-text">
+                            Perfect for city riding! The range is incredible and charging is so convenient. Future is here!
+                        </p>
+                        <div class="star-rating blue-stars">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        </div>
+                        <div class="reviewer">
+                            <div class="reviewer-avatar"></div>
+                            <div class="reviewer-info">
+                                <p class="reviewer-name">Sam P.</p>
+                                <p class="reviewer-product">Owns: Urban E-Bike</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-dots">
+                    <span class="dot active blue-dot"></span>
+                    <span class="dot pink-dot"></span>
+                    <span class="dot blue-dot"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-background">
+                <div class="gradient-glow"></div>
+                <div class="floating-particles"></div>
+            </div>
+            <div class="footer-content">
+                <!-- Partners Section -->
+                <div class="partners-section">
+                    <h3 class="partners-title">
+                        <span class="pink-text">OUR TRUSTED</span> <span class="cyan-text">PARTNERS</span>
+                    </h3>
+                    <div class="partners-container">
+                        <div class="partner-item">
+                            <canvas class="partner-bike" data-partner="0"></canvas>
+                            <div class="partner-logo">BOSCH</div>
+                            <p class="partner-desc">Bosch eBike Systems</p>
+                        </div>
+                        <div class="partner-item">
+                            <canvas class="partner-bike" data-partner="1"></canvas>
+                            <div class="partner-logo">SHIMANO</div>
+                            <p class="partner-desc">Shimano STEPS</p>
+                        </div>
+                        <div class="partner-item">
+                            <canvas class="partner-bike" data-partner="2"></canvas>
+                            <div class="partner-logo">BROSE</div>
+                            <p class="partner-desc">Brose Drive Systems</p>
+                        </div>
+                        <div class="partner-item">
+                            <canvas class="partner-bike" data-partner="3"></canvas>
+                            <div class="partner-logo">Panasonic</div>
+                            <p class="partner-desc">Panasonic Batteries</p>
+                        </div>
+                        <div class="partner-item">
+                            <canvas class="partner-bike" data-partner="4"></canvas>
+                            <div class="partner-logo">SRAM</div>
+                            <p class="partner-desc">SRAM Components</p>
+                        </div>
+                        <div class="partner-item">
+                            <canvas class="partner-bike" data-partner="5"></canvas>
+                            <div class="partner-logo">KTM</div>
+                            <p class="partner-desc">KTM E-Moto</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Footer Links -->
+                <div class="footer-main">
+                    <div class="footer-links-container">
+                        <div class="footer-column">
+                            <h4 class="footer-title">SHOP</h4>
+                            <ul class="footer-list">
+                                <li><a href="#">Pit Bikes</a></li>
+                                <li><a href="#">Pedal Bikes</a></li>
+                                <li><a href="#">All Products</a></li>
+                            </ul>
+                        </div>
+                        <div class="footer-column">
+                            <h4 class="footer-title">INFO</h4>
+                            <ul class="footer-list">
+                                <li><a href="#">Privacy Policy</a></li>
+                                <li><a href="#">Shipping & Services</a></li>
+                                <li><a href="#">Warranty</a></li>
+                            </ul>
+                        </div>
+                        <div class="footer-column">
+                            <h4 class="footer-title">COMPANY</h4>
+                            <ul class="footer-list">
+                                <li><a href="#">Contact Us</a></li>
+                                <li><a href="#">FAQs</a></li>
+                                <li><a href="#">Careers</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="footer-bottom">
+                        <p class="copyright">© 2024 Volt-Speed. All rights reserved.</p>
+                        <div class="social-links">
+                            <a href="#" class="social-icon" aria-label="Facebook">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
+                                </svg>
+                            </a>
+                            <a href="#" class="social-icon" aria-label="Twitter">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/>
+                                </svg>
+                            </a>
+                            <a href="#" class="social-icon" aria-label="YouTube">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"/>
+                                    <polygon points="9.75 15.02 15.5 11.75 9.75 8.98 9.75 15.02"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- PRODUCT PAGE -->
+    <div id="productPage" class="page-section">
+        <section class="product-page">
+            <div class="product-container">
+                <div class="product-visual">
+                    <canvas id="productBikeCanvas"></canvas>
+                </div>
+
+                <div class="product-info">
+                    <a href="#" onclick="showHomePage(); return false;" class="back-link">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                        Back to Home
+                    </a>
+
+                    <span class="product-badge">New Release</span>
+                    
+                    <h1 class="product-name">Velocity E-Moto</h1>
+                    
+                    <p class="product-tagline">The Future of Electric Performance</p>
+                    
+                    <div class="product-price">$8,999</div>
+                    
+                    <p class="product-description">
+                        Experience unparalleled power and precision with the Velocity E-Moto. Engineered for those who demand excellence, this cutting-edge electric motorcycle combines breathtaking performance with sustainable innovation. Revolutionary battery technology meets stunning design in a machine that redefines what's possible.
+                    </p>
+
+                    <div class="product-actions">
+                        <button class="btn-primary" id="addToCartBtn">Add to Cart</button>
+                        <button class="btn-secondary">Test Ride</button>
+                    </div>
+
+                    <div class="product-specs">
+                        <div class="spec-item">
+                            <div class="spec-label">Top Speed</div>
+                            <div class="spec-value">125 mph</div>
+                        </div>
+                        <div class="spec-item">
+                            <div class="spec-label">Power Output</div>
+                            <div class="spec-value">180 HP</div>
+                        </div>
+                        <div class="spec-item">
+                            <div class="spec-label">Battery</div>
+                            <div class="spec-value">20 kWh</div>
+                        </div>
+                        <div class="spec-item">
+                            <div class="spec-label">Weight</div>
+                            <div class="spec-value">425 lbs</div>
+                        </div>
+                    </div>
+
+                    <ul class="features-list">
+                        <li>Zero to 60 mph in 3.2 seconds</li>
+                        <li>120-mile range on a single charge</li>
+                        <li>Regenerative braking system</li>
+                        <li>Smart connectivity & app integration</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- CHECKOUT PAGE -->
+    <div id="checkoutPage" class="page-section">
+        <section class="checkout-page">
+            <div class="checkout-container">
+                <div>
+                    <a href="#" onclick="showProductPage(); return false;" class="back-link">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M19 12H5M12 19l-7-7 7-7"/>
+                        </svg>
+                        Back to Product
+                    </a>
+
+                    <div class="checkout-section">
+                        <h2 class="section-title">Order Summary</h2>
+                        <div id="orderSummary" class="order-summary"></div>
+                        
+                        <div class="order-total-section">
+                            <div class="order-total-line">
+                                <span>Subtotal:</span>
+                                <span id="subtotal">$0</span>
+                            </div>
+                            <div class="order-total-line">
+                                <span>Shipping:</span>
+                                <span>Free</span>
+                            </div>
+                            <div class="order-total-line">
+                                <span>Tax:</span>
+                                <span id="tax">$0</span>
+                            </div>
+                            <div class="order-total-line total">
+                                <span>Total:</span>
+                                <span class="amount" id="total">$0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="checkout-section">
+                        <div id="paymentSection">
+                            <h2 class="section-title">Payment Details</h2>
+                            
+                            <form id="payment-form" class="payment-form">
+                                <div class="form-group">
+                                    <label class="form-label" for="email">Email</label>
+                                    <input 
+                                        type="email" 
+                                        id="email" 
+                                        class="form-input" 
+                                        placeholder="you@example.com" 
+                                        required
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="name">Cardholder Name</label>
+                                    <input 
+                                        type="text" 
+                                        id="name" 
+                                        class="form-input" 
+                                        placeholder="John Doe" 
+                                        required
+                                    >
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="card-element">Card Information</label>
+                                    <div id="card-element"></div>
+                                    <div id="card-errors" role="alert"></div>
+                                </div>
+
+                                <button type="submit" id="submit-button" class="btn-pay">
+                                    <span id="button-text">Pay Now</span>
+                                </button>
+                            </form>
+
+                            <div class="test-cards">
+                                <h4>🧪 Test Mode - Use These Cards</h4>
+                                <ul>
+                                    <li><strong>Success:</strong> 4242 4242 4242 4242</li>
+                                    <li><strong>Decline:</strong> 4000 0000 0000 0002</li>
+                                    <li><strong>3D Secure:</strong> 4000 0027 6000 3184</li>
+                                    <li>Use any future expiry date, any 3-digit CVC, and any postal code</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div id="successMessage" class="success-message">
+                            <div class="success-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                                    <path d="M20 6L9 17l-5-5"/>
+                                </svg>
+                            </div>
+                            <h2>Payment Successful!</h2>
+                            <p>Thank you for your order. You'll receive a confirmation email shortly.</p>
+                            <button class="btn-pay" onclick="resetToHome()" style="margin-top: 1rem;">
+                                Continue Shopping
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Cart Modal -->
+    <div id="cartModal" class="cart-modal">
+        <div class="cart-modal-overlay"></div>
+        <div class="cart-modal-content">
+            <div class="cart-modal-header">
+                <h2 class="cart-modal-title">Your Cart</h2>
+                <button class="cart-close-btn" id="closeCartBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <div id="emptyCart" class="empty-cart">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <path d="M16 10a4 4 0 0 1-8 0"/>
+                </svg>
+                <p>Your cart is empty</p>
+                <button class="btn-primary" id="continueShoppingBtn">Continue Shopping</button>
+            </div>
+            
+            <div id="cartContent" class="cart-content">
+                <div id="cartItems" class="cart-items"></div>
+                
+                <div class="cart-footer">
+                    <div class="cart-total">
+                        <span>Total:</span>
+                        <span id="cartTotal" class="total-amount">$0</span>
+                    </div>
+                    <button class="btn-checkout" id="proceedCheckoutBtn">
+                        Proceed to Checkout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EMBEDDED JAVASCRIPT -->
+    <script>
+        // ============================================
+        // STRIPE CONFIGURATION
+        // ============================================
+        // ⚠️ REPLACE WITH YOUR STRIPE TEST KEY
+        // Get from: https://dashboard.stripe.com/test/apikeys
+        const STRIPE_PUBLISHABLE_KEY = 'pk_test_51SWeg9JbF3EpntbDtTOySyC3lFBqBbGrVMuNCVrxLHZSrbokZI5lKd3at1PiBhkxikidnycLAmW8KjAouxuxjswB00D0WHn99Q';
+        
+        let stripe, cardElement, elements;
+
+        function initializeStripe() {
+            if (STRIPE_PUBLISHABLE_KEY !== 'YOUR_STRIPE_PUBLISHABLE_KEY_HERE') {
+                try {
+                    stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+                    elements = stripe.elements();
+                    cardElement = elements.create('card', {
+                        style: {
+                            base: {
+                                color: '#ffffff',
+                                fontFamily: '"Inter", sans-serif',
+                                fontSize: '16px',
+                                '::placeholder': { color: '#888' },
+                                iconColor: '#00f0ff',
+                            },
+                            invalid: {
+                                color: '#ff0064',
+                                iconColor: '#ff0064',
+                            },
+                        },
+                    });
+                    cardElement.mount('#card-element');
+                    
+                    cardElement.on('change', (event) => {
+                        const displayError = document.getElementById('card-errors');
+                        if (event.error) {
+                            displayError.textContent = event.error.message;
+                        } else {
+                            displayError.textContent = '';
+                        }
+                    });
+                } catch (error) {
+                    console.error('Stripe initialization error:', error);
+                }
+            }
+        }
+    </script>
+
+    <script>
+        // ============================================
+        // PAGE NAVIGATION
+        // ============================================
+        function showHomePage() {
+            document.getElementById('homePage').classList.add('active');
+            document.getElementById('productPage').classList.remove('active');
+            document.getElementById('checkoutPage').classList.remove('active');
+            window.scrollTo(0, 0);
+        }
+
+        function showProductPage() {
+            document.getElementById('homePage').classList.remove('active');
+            document.getElementById('productPage').classList.add('active');
+            document.getElementById('checkoutPage').classList.remove('active');
+            window.scrollTo(0, 0);
+            // Initialize product 3D bike if not done yet
+            if (!window.productBikeInitialized) {
+                initProductBike();
+            }
+        }
+
+        function showCheckoutPage() {
+            document.getElementById('homePage').classList.remove('active');
+            document.getElementById('productPage').classList.remove('active');
+            document.getElementById('checkoutPage').classList.add('active');
+            loadOrderSummary();
+            window.scrollTo(0, 0);
+        }
+
+        function resetToHome() {
+            document.getElementById('successMessage').classList.remove('show');
+            document.getElementById('paymentSection').style.display = 'block';
+            document.getElementById('payment-form').reset();
+            showHomePage();
+        }
+
+        // ============================================
+        // CART MANAGEMENT
+        // ============================================
+        let cart = [];
+
+        function loadCart() {
+            const savedCart = localStorage.getItem('voltspeed_cart');
+            cart = savedCart ? JSON.parse(savedCart) : [];
+            updateCartBadge();
+        }
+
+        function saveCart() {
+            localStorage.setItem('voltspeed_cart', JSON.stringify(cart));
+            updateCartBadge();
+        }
+
+        function updateCartBadge() {
+            const badge = document.querySelector('.cart-badge');
+            const count = cart.reduce((total, item) => total + item.quantity, 0);
+            if (badge) {
+                badge.textContent = count;
+                badge.style.display = count > 0 ? 'flex' : 'none';
+            }
+        }
+
+        function addToCart() {
+            const product = {
+                id: 'velocity-emoto',
+                name: 'Velocity E-Moto',
+                price: 8999,
+            };
+
+            const existingItem = cart.find(item => item.id === product.id);
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+
+            saveCart();
+            showNotification('Velocity E-Moto added to cart!');
+        }
+
+        function updateQuantity(productId, newQuantity) {
+            if (newQuantity <= 0) {
+                cart = cart.filter(item => item.id !== productId);
+            } else {
+                const item = cart.find(item => item.id === productId);
+                if (item) item.quantity = newQuantity;
+            }
+            saveCart();
+            renderCart();
+        }
+
+        function removeItem(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            saveCart();
+            renderCart();
+        }
+
+        function getTotal() {
+            return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+        }
+
+        function openCart() {
+            renderCart();
+            document.getElementById('cartModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCart() {
+            document.getElementById('cartModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function renderCart() {
+            const emptyCart = document.getElementById('emptyCart');
+            const cartContent = document.getElementById('cartContent');
+            const cartItems = document.getElementById('cartItems');
+            const cartTotal = document.getElementById('cartTotal');
+
+            if (cart.length === 0) {
+                emptyCart.classList.add('show');
+                cartContent.classList.remove('show');
+                return;
+            }
+
+            emptyCart.classList.remove('show');
+            cartContent.classList.add('show');
+
+            cartItems.innerHTML = cart.map(item => `
+                <div class="cart-item">
+                    <div>
+                        <div class="cart-item-name">${item.name}</div>
+                        <div class="cart-item-price">$${(item.price * item.quantity).toLocaleString()}</div>
+                    </div>
+                    <div class="cart-item-controls">
+                        <div class="quantity-controls">
+                            <button class="qty-btn" onclick="updateQuantity('${item.id}', ${item.quantity - 1})">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                            </button>
+                            <span class="quantity">${item.quantity}</span>
+                            <button class="qty-btn" onclick="updateQuantity('${item.id}', ${item.quantity + 1})">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="12" y1="5" x2="12" y2="19"/>
+                                    <line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <button class="remove-btn" onclick="removeItem('${item.id}')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            cartTotal.textContent = `$${getTotal().toLocaleString()}`;
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'cart-notification';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => notification.classList.add('show'), 10);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function loadOrderSummary() {
+            const orderSummary = document.getElementById('orderSummary');
+            const subtotal = getTotal();
+            const tax = subtotal * 0.08;
+            const total = subtotal + tax;
+
+            orderSummary.innerHTML = cart.map(item => `
+                <div class="order-item">
+                    <div class="order-item-info">
+                        <div class="order-item-name">${item.name}</div>
+                        <div class="order-item-qty">Quantity: ${item.quantity}</div>
+                    </div>
+                    <div class="order-item-price">$${(item.price * item.quantity).toLocaleString()}</div>
+                </div>
+            `).join('');
+
+            document.getElementById('subtotal').textContent = `$${subtotal.toLocaleString()}`;
+            document.getElementById('tax').textContent = `$${tax.toFixed(2)}`;
+            document.getElementById('total').textContent = `$${total.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+        }
+
+        // ============================================
+        // PAYMENT HANDLING
+        // ============================================
+        async function handlePaymentSubmit(event) {
+            event.preventDefault();
+
+            if (!stripe || !cardElement) {
+                alert('Please add your Stripe API key in the code (search for STRIPE_PUBLISHABLE_KEY)');
+                return;
+            }
+
+            const submitButton = document.getElementById('submit-button');
+            const buttonText = document.getElementById('button-text');
+            
+            submitButton.disabled = true;
+            buttonText.textContent = 'Processing...';
+
+            try {
+                // Create PaymentMethod
+                const { error: pmError, paymentMethod } = await stripe.createPaymentMethod({
+                    type: 'card',
+                    card: cardElement,
+                    billing_details: {
+                        name: document.getElementById('name').value,
+                        email: document.getElementById('email').value,
+                    },
+                });
+
+                if (pmError) {
+                    showError(pmError.message);
+                    submitButton.disabled = false;
+                    buttonText.textContent = 'Pay Now';
+                    return;
+                }
+
+                console.log('PaymentMethod created:', paymentMethod.id);
+
+                // ⚠️ FRONTEND-ONLY TEST MODE ⚠️
+                // Simulate payment processing based on test card numbers
+                // In production, you MUST use a backend server to process payments
+                
+                const cardNumber = paymentMethod.card.last4;
+                const cardBrand = paymentMethod.card.brand;
+                
+                console.log('Card info:', cardBrand, 'ending in', cardNumber);
+
+                // Simulate processing delay
+                await new Promise(resolve => setTimeout(resolve, 1500));
+
+                // Check for specific test card scenarios
+                // These are Stripe's official test card numbers
+                const testCardScenarios = {
+                    '0002': 'Your card was declined.',
+                    '9995': 'Your card has insufficient funds.',
+                    '9979': 'Your card was declined (stolen card).',
+                    '0069': 'Your card has expired.',
+                    '0127': 'Your card\'s security code is incorrect.',
+                    '0341': 'The card was declined due to an issue with the payment method.',
+                };
+
+                // Check if this is a test card that should be declined
+                if (testCardScenarios[cardNumber]) {
+                    throw new Error(testCardScenarios[cardNumber]);
+                }
+
+                // If we got here, simulate successful payment
+                console.log('✅ Payment would succeed with this card');
+                console.log('Amount:', calculateTotal().toFixed(2), 'USD');
+                console.log('Payment Method ID:', paymentMethod.id);
+                
+                // Show success
+                setTimeout(() => {
+                    showSuccess();
+                    cart = [];
+                    saveCart();
+                }, 500);
+
+            } catch (error) {
+                console.error('❌ Payment error:', error);
+                showError(error.message || 'An unexpected error occurred.');
+                submitButton.disabled = false;
+                buttonText.textContent = 'Pay Now';
+            }
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('card-errors');
+            errorElement.textContent = message;
+            setTimeout(() => {
+                errorElement.textContent = '';
+            }, 5000);
+        }
+
+        function showSuccess() {
+            document.getElementById('paymentSection').style.display = 'none';
+            document.getElementById('successMessage').classList.add('show');
+        }
+
+        // ============================================
+        // MENU FUNCTIONS
+        // ============================================
+        function toggleMenu() {
+            const hamburgerBtn = document.querySelector('.hamburger-btn');
+            const slideMenu = document.querySelector('.slide-menu');
+            const menuOverlay = document.querySelector('.menu-overlay');
+            
+            hamburgerBtn.classList.toggle('active');
+            slideMenu.classList.toggle('active');
+            menuOverlay.classList.toggle('active');
+            document.body.style.overflow = slideMenu.classList.contains('active') ? 'hidden' : '';
+        }
+
+        function closeMenu() {
+            const hamburgerBtn = document.querySelector('.hamburger-btn');
+            const slideMenu = document.querySelector('.slide-menu');
+            const menuOverlay = document.querySelector('.menu-overlay');
+            
+            hamburgerBtn.classList.remove('active');
+            slideMenu.classList.remove('active');
+            menuOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM Content Loaded - Initializing site...');
+            console.log('THREE.js available:', typeof THREE !== 'undefined');
+            console.log('GLTFLoader available:', typeof THREE !== 'undefined' && typeof THREE.GLTFLoader !== 'undefined');
+            
+            // Cart
+            loadCart();
+            initializeStripe();
+
+            // Menu
+            document.querySelector('.hamburger-btn').addEventListener('click', toggleMenu);
+            document.querySelector('.menu-overlay').addEventListener('click', closeMenu);
+
+            // Cart buttons
+            document.querySelector('.cart-btn').addEventListener('click', openCart);
+            document.getElementById('closeCartBtn').addEventListener('click', closeCart);
+            document.querySelector('.cart-modal-overlay').addEventListener('click', closeCart);
+            document.getElementById('continueShoppingBtn').addEventListener('click', closeCart);
+            document.getElementById('proceedCheckoutBtn').addEventListener('click', () => {
+                if (cart.length > 0) {
+                    closeCart();
+                    showCheckoutPage();
+                }
+            });
+
+            // Product page
+            document.getElementById('addToCartBtn').addEventListener('click', addToCart);
+
+            // Payment form
+            document.getElementById('payment-form').addEventListener('submit', handlePaymentSubmit);
+
+            // Testimonials carousel
+            const testimonialDots = document.querySelectorAll('.carousel-dots .dot');
+            testimonialDots.forEach((dot, index) => {
+                dot.addEventListener('click', () => {
+                    testimonialDots.forEach(d => d.classList.remove('active'));
+                    dot.classList.add('active');
+                });
+            });
+
+            // Auto-rotate testimonials
+            let testimonialIndex = 0;
+            setInterval(() => {
+                testimonialIndex = (testimonialIndex + 1) % testimonialDots.length;
+                testimonialDots.forEach((dot, idx) => {
+                    dot.classList.toggle('active', idx === testimonialIndex);
+                });
+            }, 5000);
+
+            // Initialize 3D elements
+            initLogo3D();
+            initHeroBike();
+            initShowcaseCarousel();
+            initPartnerBikes();
+        });
+    </script>
+
+    <!-- 3D LOGO ANIMATION -->
+    <script>
+        function initLogo3D() {
+            const canvas = document.getElementById('logo3DCanvas');
+            if (!canvas) {
+                console.error('Logo canvas not found');
+                return;
+            }
+
+            if (typeof THREE === 'undefined') {
+                console.error('THREE.js not loaded');
+                return;
+            }
+
+            if (typeof THREE.GLTFLoader === 'undefined') {
+                console.error('GLTFLoader not loaded');
+                return;
+            }
+
+            console.log('Initializing logo 3D...');
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ 
+                canvas: canvas,
+                alpha: true,
+                antialias: true
+            });
+
+            renderer.setSize(50, 50);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.outputEncoding = THREE.sRGBEncoding;
+
+            camera.position.set(0, 0.5, 2);
+            camera.lookAt(0, 0, 0);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const keyLight = new THREE.DirectionalLight(0x00f0ff, 1.5);
+            keyLight.position.set(2, 2, 2);
+            scene.add(keyLight);
+
+            const fillLight = new THREE.DirectionalLight(0xff00ff, 0.8);
+            fillLight.position.set(-2, 1, -1);
+            scene.add(fillLight);
+
+            const rimLight = new THREE.DirectionalLight(0x00f0ff, 1);
+            rimLight.position.set(0, -1, -2);
+            scene.add(rimLight);
+
+            // Load bike model
+            const loader = new THREE.GLTFLoader();
+            let bike = null;
+
+            console.log('Loading logo bike model...');
+            loader.load(
+                'bike.glb',
+                function(gltf) {
+                    bike = gltf.scene;
+                    console.log('Logo bike loaded successfully');
+                    
+                    const box = new THREE.Box3().setFromObject(bike);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
+                    
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const scale = 1.2 / maxDim;
+                    
+                    bike.scale.set(scale, scale, scale);
+                    bike.position.sub(center.multiplyScalar(scale));
+                    
+                    bike.traverse((child) => {
+                        if (child.isMesh) {
+                            child.material.metalness = 0.9;
+                            child.material.roughness = 0.2;
+                            child.material.emissive = new THREE.Color(0x00f0ff);
+                            child.material.emissiveIntensity = 0.3;
+                            child.material.color = new THREE.Color(0x00f0ff);
+                        }
+                    });
+                    
+                    scene.add(bike);
+                },
+                function(xhr) {
+                    console.log('Logo bike loading: ' + (xhr.loaded / xhr.total * 100) + '%');
+                },
+                function(error) {
+                    console.error('Error loading logo bike:', error);
+                }
+            );
+
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                if (bike) {
+                    bike.rotation.y += 0.01;
+                    bike.position.y = Math.sin(Date.now() * 0.001) * 0.05;
+                }
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+        }
+    </script>
+
+    <!-- HERO 3D BIKE -->
+    <script>
+        function initHeroBike() {
+            console.log('Initializing hero bike...');
+            const canvas = document.getElementById('bikeCanvas');
+            if (!canvas) {
+                console.error('Hero bike canvas not found');
+                return;
+            }
+
+            const scene = new THREE.Scene();
+
+            const width = canvas.parentElement.clientWidth || 600;
+            const height = canvas.parentElement.clientHeight || 600;
+            
+            const camera = new THREE.PerspectiveCamera(35, width / height, 0.1, 1000);
+            camera.position.set(4, 1.5, 5);
+            camera.lookAt(0, 0.2, 0);
+
+            const renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                antialias: true,
+                alpha: true
+            });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const keyLight = new THREE.DirectionalLight(0x00f0ff, 2);
+            keyLight.position.set(5, 5, 5);
+            scene.add(keyLight);
+
+            const rimLight = new THREE.DirectionalLight(0xff00ff, 1.5);
+            rimLight.position.set(-5, 3, -5);
+            scene.add(rimLight);
+
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            fillLight.position.set(0, 10, 0);
+            scene.add(fillLight);
+
+            const cyanPoint = new THREE.PointLight(0x00f0ff, 2, 10);
+            cyanPoint.position.set(3, 1, 3);
+            scene.add(cyanPoint);
+
+            const magentaPoint = new THREE.PointLight(0xff00ff, 2, 10);
+            magentaPoint.position.set(-3, 1, -3);
+            scene.add(magentaPoint);
+
+            // Load bike
+            const loader = new THREE.GLTFLoader();
+            let bike = null;
+
+            loader.load(
+                'bike.glb',
+                function(gltf) {
+                    bike = gltf.scene;
+                    
+                    const box = new THREE.Box3().setFromObject(bike);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
+                    
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const scale = 4.0 / maxDim;
+                    bike.scale.multiplyScalar(scale);
+                    
+                    bike.position.x = -center.x * scale;
+                    bike.position.y = -center.y * scale;
+                    bike.position.z = -center.z * scale;
+                    bike.position.y += (size.y * scale) / 2 - 0.8;
+                    
+                    bike.userData.originalY = bike.position.y;
+                    bike.rotation.y = Math.PI * 0.15;
+                    
+                    bike.traverse((child) => {
+                        if (child.isMesh) {
+                            child.material.metalness = 0.9;
+                            child.material.roughness = 0.3;
+                            child.material.emissive = new THREE.Color(0x00f0ff);
+                            child.material.emissiveIntensity = 0.4;
+                        }
+                    });
+                    
+                    scene.add(bike);
+                    console.log('Hero bike loaded');
+                },
+                undefined,
+                function(error) {
+                    console.error('Error loading hero bike:', error);
+                }
+            );
+
+            let time = 0;
+            function animate() {
+                requestAnimationFrame(animate);
+                time += 0.01;
+                
+                if (bike) {
+                    bike.position.y = Math.sin(time * 0.5) * 0.1 + (bike.userData.originalY || 0.2);
+                    bike.rotation.y += 0.002;
+                }
+                
+                cyanPoint.position.x = Math.sin(time) * 3;
+                cyanPoint.position.z = Math.cos(time) * 3;
+                
+                magentaPoint.position.x = Math.sin(time + Math.PI) * 3;
+                magentaPoint.position.z = Math.cos(time + Math.PI) * 3;
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+
+            window.addEventListener('resize', () => {
+                const width = canvas.parentElement.clientWidth;
+                const height = canvas.parentElement.clientHeight;
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+            });
+        }
+    </script>
+
+    <!-- PRODUCT 3D BIKE -->
+    <script>
+        function initProductBike() {
+            console.log('Initializing product bike...');
+            const canvas = document.getElementById('productBikeCanvas');
+            if (!canvas) {
+                console.error('Product bike canvas not found');
+                return;
+            }
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(35, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ 
+                canvas: canvas,
+                alpha: true,
+                antialias: true 
+            });
+
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+
+            camera.position.set(4, 1.5, 5);
+            camera.lookAt(0, 0.2, 0);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const keyLight = new THREE.DirectionalLight(0x00f0ff, 2);
+            keyLight.position.set(5, 5, 5);
+            scene.add(keyLight);
+
+            const rimLight = new THREE.DirectionalLight(0xff00ff, 1.5);
+            rimLight.position.set(-5, 3, -5);
+            scene.add(rimLight);
+
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            fillLight.position.set(0, 10, 0);
+            scene.add(fillLight);
+
+            const cyanPoint = new THREE.PointLight(0x00f0ff, 2, 10);
+            cyanPoint.position.set(3, 1, 3);
+            scene.add(cyanPoint);
+
+            const magentaPoint = new THREE.PointLight(0xff00ff, 2, 10);
+            magentaPoint.position.set(-3, 1, -3);
+            scene.add(magentaPoint);
+
+            // Load bike
+            const loader = new THREE.GLTFLoader();
+            let bike = null;
+
+            loader.load(
+                'bike.glb',
+                function(gltf) {
+                    bike = gltf.scene;
+                    
+                    const box = new THREE.Box3().setFromObject(bike);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
+                    
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const scale = 4.0 / maxDim;
+                    bike.scale.multiplyScalar(scale);
+                    
+                    bike.position.x = -center.x * scale;
+                    bike.position.y = -center.y * scale;
+                    bike.position.z = -center.z * scale;
+                    bike.position.y += (size.y * scale) / 2 - 0.8;
+                    
+                    bike.userData.originalY = bike.position.y;
+                    bike.rotation.y = Math.PI * 0.15;
+                    
+                    bike.traverse((child) => {
+                        if (child.isMesh) {
+                            child.material.metalness = 0.9;
+                            child.material.roughness = 0.3;
+                            child.material.emissive = new THREE.Color(0x00f0ff);
+                            child.material.emissiveIntensity = 0.4;
+                        }
+                    });
+                    
+                    scene.add(bike);
+                    console.log('Product bike loaded');
+                },
+                undefined,
+                function(error) {
+                    console.error('Error loading product bike:', error);
+                }
+            );
+
+            let time = 0;
+            function animate() {
+                requestAnimationFrame(animate);
+                time += 0.01;
+                
+                if (bike) {
+                    bike.position.y = Math.sin(time * 0.5) * 0.1 + (bike.userData.originalY || 0.2);
+                    bike.rotation.y += 0.002;
+                }
+                
+                cyanPoint.position.x = Math.sin(time) * 3;
+                cyanPoint.position.z = Math.cos(time) * 3;
+                
+                magentaPoint.position.x = Math.sin(time + Math.PI) * 3;
+                magentaPoint.position.z = Math.cos(time + Math.PI) * 3;
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+
+            window.addEventListener('resize', () => {
+                const width = canvas.clientWidth;
+                const height = canvas.clientHeight;
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+            });
+
+            window.productBikeInitialized = true;
+        }
+    </script>
+
+    <!-- SHOWCASE CAROUSEL -->
+    <script>
+        function initShowcaseCarousel() {
+            console.log('Initializing showcase carousel...');
+            const canvas = document.getElementById('showcase3DCanvas');
+            if (!canvas) {
+                console.error('Showcase canvas not found');
+                return;
+            }
+
+            const scene = new THREE.Scene();
+
+            // Camera
+            const camera = new THREE.PerspectiveCamera(
+                40,  // Reduced FOV for smaller appearance
+                canvas.parentElement.clientWidth / canvas.parentElement.clientHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(0, 2, 10);  // Moved camera further back
+            camera.lookAt(0, 0.5, 0);
+
+            // Renderer
+            const renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                antialias: true,
+                alpha: true
+            });
+            const width = canvas.parentElement.clientWidth || 800;
+            const height = canvas.parentElement.clientHeight || 600;
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+
+            console.log('Showcase renderer initialized:', width, 'x', height);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const keyLight = new THREE.DirectionalLight(0x00f0ff, 2);
+            keyLight.position.set(5, 5, 5);
+            scene.add(keyLight);
+
+            const rimLight = new THREE.DirectionalLight(0xff00ff, 1.5);
+            rimLight.position.set(-5, 3, -5);
+            scene.add(rimLight);
+
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            fillLight.position.set(0, 10, 0);
+            scene.add(fillLight);
+
+            // Carousel state
+            let currentIndex = 0;
+            let targetRotation = 0;
+            let currentRotation = 0;
+            let isRotating = false;
+            const bikes = [];
+            const bikeData = [
+                { name: 'Pit Bike', color: 0xff6b35 },    // Orange
+                { name: 'E-Moto', color: 0x00f0ff },      // Cyan
+                { name: 'Pedal Bike', color: 0xff00ff }   // Magenta
+            ];
+
+            // Load bike model
+            const loader = new THREE.GLTFLoader();
+            loader.load(
+                'bike.glb',
+                (gltf) => {
+                    console.log('Showcase bikes loading...');
+                    
+                    // Create 3 bikes in triangular positions
+                    for (let i = 0; i < 3; i++) {
+                        const bikeClone = gltf.scene.clone();
+                        const angle = (i * 120) * (Math.PI / 180); // 120 degrees apart
+                        const radius = 4.5;  // Increased radius for more space
+                        
+                        // Position in circle
+                        bikeClone.position.x = Math.sin(angle) * radius;
+                        bikeClone.position.z = Math.cos(angle) * radius;
+                        bikeClone.position.y = 0;
+                        
+                        // Scale - reduced size
+                        const box = new THREE.Box3().setFromObject(bikeClone);
+                        const size = box.getSize(new THREE.Vector3());
+                        const maxDim = Math.max(size.x, size.y, size.z);
+                        const scale = 2.0 / maxDim;  // Reduced from 3.0 to 2.0
+                        bikeClone.scale.multiplyScalar(scale);
+                        
+                        // Rotate to face center
+                        bikeClone.rotation.y = -angle + Math.PI / 2;
+                        
+                        // Apply colored materials
+                        bikeClone.traverse((child) => {
+                            if (child.isMesh && child.material) {
+                                child.material = child.material.clone();
+                                child.material.metalness = 0.8;
+                                child.material.roughness = 0.3;
+                                
+                                // Color based on bike type
+                                const tint = new THREE.Color(bikeData[i].color);
+                                child.material.color.multiply(tint);
+                                
+                                if (child.material.emissive) {
+                                    child.material.emissive.setHex(bikeData[i].color);
+                                    child.material.emissiveIntensity = 0.3;
+                                }
+                            }
+                        });
+                        
+                        bikes.push({
+                            mesh: bikeClone,
+                            baseAngle: angle,
+                            index: i
+                        });
+                        
+                        scene.add(bikeClone);
+                    }
+                    
+                    console.log('3 showcase bikes loaded');
+                    updateBikePositions();
+                },
+                undefined,
+                (error) => {
+                    console.error('Error loading showcase bikes:', error);
+                }
+            );
+
+            // Update bike positions based on rotation
+            function updateBikePositions() {
+                bikes.forEach((bikeObj, i) => {
+                    const angle = bikeObj.baseAngle + currentRotation;
+                    const radius = 4.5;
+                    
+                    bikeObj.mesh.position.x = Math.sin(angle) * radius;
+                    bikeObj.mesh.position.z = Math.cos(angle) * radius;
+                    bikeObj.mesh.rotation.y = -angle + Math.PI / 2;
+                    
+                    // Scale based on z position (depth) - front bike is bigger
+                    const zPos = bikeObj.mesh.position.z;
+                    const scaleFactor = THREE.MathUtils.mapLinear(zPos, -4.5, 4.5, 0.6, 1.0);
+                    const baseScale = 2.0 / 2; // Reduced scale
+                    bikeObj.mesh.scale.setScalar(baseScale * scaleFactor);
+                    
+                    // Adjust opacity based on position (front is more visible)
+                    bikeObj.mesh.traverse((child) => {
+                        if (child.isMesh && child.material) {
+                            child.material.transparent = true;
+                            child.material.opacity = THREE.MathUtils.mapLinear(zPos, -4.5, 4.5, 0.4, 1.0);
+                        }
+                    });
+                });
+            }
+
+            // Rotation animation
+            function rotateCarousel(direction) {
+                if (isRotating) return;
+                
+                isRotating = true;
+                const angleStep = (120 * Math.PI) / 180;
+                
+                if (direction === 'next') {
+                    currentIndex = (currentIndex + 1) % 3;
+                    targetRotation += angleStep;
+                } else {
+                    currentIndex = (currentIndex - 1 + 3) % 3;
+                    targetRotation -= angleStep;
+                }
+                
+                updateActiveCard();
+            }
+
+            // Update active product card
+            function updateActiveCard() {
+                const cards = document.querySelectorAll('.product-card');
+                cards.forEach((card, i) => {
+                    if (i === currentIndex) {
+                        card.classList.add('active');
+                    } else {
+                        card.classList.remove('active');
+                    }
+                });
+            }
+
+            // Arrow button controls
+            const prevBtn = document.querySelector('.prev-arrow-3d');
+            const nextBtn = document.querySelector('.next-arrow-3d');
+            
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => rotateCarousel('prev'));
+            }
+            
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => rotateCarousel('next'));
+            }
+
+            // Animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // Smooth rotation interpolation
+                if (Math.abs(targetRotation - currentRotation) > 0.001) {
+                    currentRotation += (targetRotation - currentRotation) * 0.1;
+                    updateBikePositions();
+                } else if (isRotating) {
+                    currentRotation = targetRotation;
+                    isRotating = false;
+                }
+                
+                // Gentle floating animation
+                bikes.forEach((bikeObj, i) => {
+                    const time = Date.now() * 0.001;
+                    bikeObj.mesh.position.y = Math.sin(time + i) * 0.1;
+                });
+                
+                renderer.render(scene, camera);
+            }
+
+            animate();
+
+            // Handle window resize
+            function onResize() {
+                const width = canvas.parentElement.clientWidth || 800;
+                const height = canvas.parentElement.clientHeight || 600;
+                
+                camera.aspect = width / height;
+                camera.updateProjectionMatrix();
+                renderer.setSize(width, height);
+            }
+
+            window.addEventListener('resize', onResize);
+        }
+    </script>
+
+    <!-- PARTNER BIKES -->
+    <script>
+        function initPartnerBikes() {
+            console.log('Initializing partner bikes...');
+            const canvases = document.querySelectorAll('.partner-bike');
+            if (!canvases.length) {
+                console.error('No partner bike canvases found');
+                return;
+            }
+            console.log('Found ' + canvases.length + ' partner bike canvases');
+
+            const loader = new THREE.GLTFLoader();
+            let bikeModel = null;
+
+            loader.load(
+                'bike.glb',
+                (gltf) => {
+                    bikeModel = gltf.scene;
+                    canvases.forEach((canvas, index) => {
+                        initPartnerBike(canvas, bikeModel.clone(), index);
+                    });
+                },
+                undefined,
+                (error) => {
+                    console.error('Error loading partner bike:', error);
+                }
+            );
+        }
+
+        function initPartnerBike(canvas, bikeClone, index) {
+            const scene = new THREE.Scene();
+
+            const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+            camera.position.set(2, 1, 2.5);
+            camera.lookAt(0, 0.3, 0);
+
+            const renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                antialias: true,
+                alpha: true
+            });
+            renderer.setSize(150, 150);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            scene.add(ambientLight);
+
+            const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            keyLight.position.set(3, 3, 3);
+            scene.add(keyLight);
+
+            const rimLight = new THREE.DirectionalLight(0xccccff, 0.8);
+            rimLight.position.set(-2, 2, -2);
+            scene.add(rimLight);
+
+            const fillLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            fillLight.position.set(0, -2, 0);
+            scene.add(fillLight);
+
+            // Setup bike
+            const bike = bikeClone;
+            
+            const box = new THREE.Box3().setFromObject(bike);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            
+            const maxDim = Math.max(size.x, size.y, size.z);
+            const scale = 2.0 / maxDim;
+            bike.scale.multiplyScalar(scale);
+            
+            bike.position.x = -center.x * scale;
+            bike.position.y = -center.y * scale + 0.2;
+            bike.position.z = -center.z * scale;
+
+            // White sandblasted glass material
+            bike.traverse((child) => {
+                if (child.isMesh && child.material) {
+                    child.material = child.material.clone();
+                    child.material.color.setHex(0xffffff);
+                    child.material.metalness = 0.7;
+                    child.material.roughness = 0.4;
+                    child.material.transparent = true;
+                    child.material.opacity = 0.95;
+                    
+                    if (child.material.emissive) {
+                        child.material.emissive.setHex(0xffffff);
+                        child.material.emissiveIntensity = 0.15;
+                    }
+                }
+            });
+
+            scene.add(bike);
+
+            // Animation
+            let time = index * 1.0;
+
+            function animate() {
+                requestAnimationFrame(animate);
+                time += 0.01;
+
+                bike.rotation.y = time * 0.5;
+                bike.position.y = Math.sin(time * 0.8) * 0.05 + 0.2;
+
+                renderer.render(scene, camera);
+            }
+
+            animate();
+        }
+    </script>
+</body>
+</html>
