@@ -133,6 +133,79 @@
             margin-bottom: 1.5rem;
         }
 
+        /* Stock Status Styles */
+        .stock-status {
+            margin: 1.5rem 0;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stock-status-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            color: var(--text-gray);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .loading-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(0, 240, 255, 0.3);
+            border-top-color: var(--neon-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .stock-status-in-stock {
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid rgba(0, 255, 0, 0.3);
+            color: #00ff00;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .stock-status-in-stock::before {
+            content: "✓";
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .stock-status-out-stock {
+            background: rgba(255, 0, 100, 0.1);
+            border: 2px solid rgba(255, 0, 100, 0.3);
+            color: #ff0064;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .stock-status-out-stock::before {
+            content: "✕";
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .stock-supplier-info {
+            font-size: 0.875rem;
+            color: var(--text-gray);
+            margin-top: 0.5rem;
+        }
+
         .product-specs {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -924,6 +997,13 @@
                         Experience unparalleled power and precision with the Velocity E-Moto. Engineered for those who demand excellence, this cutting-edge electric motorcycle combines breathtaking performance with sustainable innovation. Revolutionary battery technology meets stunning design in a machine that redefines what's possible.
                     </p>
 
+                    <!-- Stock Status Badge -->
+                    <div id="stockStatus" class="stock-status">
+                        <div class="stock-status-loading">
+                            <span class="loading-spinner"></span> Checking availability...
+                        </div>
+                    </div>
+
                     <div class="product-actions">
                         <button class="btn-primary" id="addToCartBtn">Add to Cart</button>
                         <button class="btn-secondary">Test Ride</button>
@@ -1172,6 +1252,8 @@
             if (!window.productBikeInitialized) {
                 initProductBike();
             }
+            // Check stock status
+            checkStockStatus('velocity-emoto');
         }
 
         function showCheckoutPage() {
@@ -1214,7 +1296,65 @@
             }
         }
 
+        // Check stock status for product
+        async function checkStockStatus(productId) {
+            const stockStatusDiv = document.getElementById('stockStatus');
+            const addToCartBtn = document.getElementById('addToCartBtn');
+
+            try {
+                // Call stock status API
+                const response = await fetch(`/.netlify/functions/get-stock-status?productId=${productId}`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to check stock');
+                }
+
+                const data = await response.json();
+
+                if (data.inStock) {
+                    // Product is in stock
+                    stockStatusDiv.innerHTML = `
+                        <div class="stock-status-in-stock">
+                            <span>In Stock - Ships in 2-4 Weeks</span>
+                        </div>
+                        ${data.availableSupplier && data.availableSupplier !== 'Unknown' ? 
+                            `<div class="stock-supplier-info">Available from ${data.availableSupplier}</div>` : ''}
+                    `;
+                    addToCartBtn.disabled = false;
+                } else {
+                    // Product is out of stock
+                    stockStatusDiv.innerHTML = `
+                        <div class="stock-status-out-stock">
+                            <span>Out of Stock</span>
+                        </div>
+                        <div class="stock-supplier-info">We'll notify you when back in stock</div>
+                    `;
+                    addToCartBtn.disabled = true;
+                    addToCartBtn.textContent = 'Out of Stock';
+                    addToCartBtn.style.opacity = '0.5';
+                    addToCartBtn.style.cursor = 'not-allowed';
+                }
+
+            } catch (error) {
+                console.error('Error checking stock:', error);
+                // On error, assume in stock (safe default for launch)
+                stockStatusDiv.innerHTML = `
+                    <div class="stock-status-in-stock">
+                        <span>Available - Contact for Details</span>
+                    </div>
+                `;
+                addToCartBtn.disabled = false;
+            }
+        }
+
         function addToCart() {
+            // Double-check stock before adding
+            const addToCartBtn = document.getElementById('addToCartBtn');
+            if (addToCartBtn.disabled) {
+                showNotification('This product is currently out of stock');
+                return;
+            }
+
             const product = {
                 id: 'velocity-emoto',
                 name: 'Velocity E-Moto',

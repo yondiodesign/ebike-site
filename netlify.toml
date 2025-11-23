@@ -1,0 +1,39 @@
+# Netlify configuration for VOLT-SPEED E-Bike Shop
+
+[build]
+  functions = "netlify/functions"
+  publish = "."
+
+# Scheduled function to check supplier inventory
+# Runs every hour to keep stock status up to date
+[[plugins]]
+  package = "@netlify/plugin-functions-install-core"
+
+[functions]
+  # General function settings
+  node_bundler = "esbuild"
+
+# Schedule: Check inventory every hour
+# Cron format: minute hour day month weekday
+# "0 * * * *" = Every hour at :00
+[[functions."check-supplier-inventory".schedule]]
+  cron = "0 * * * *"  # Every hour
+
+# Alternative schedules (comment out the one above and use these):
+# Every 15 minutes: "*/15 * * * *"
+# Every 30 minutes: "*/30 * * * *"
+# Every 2 hours: "0 */2 * * *"
+# Every 6 hours: "0 */6 * * *"
+# Once a day at 9am: "0 9 * * *"
+
+# Redirect rules (optional)
+[[redirects]]
+  from = "/api/stock/*"
+  to = "/.netlify/functions/get-stock-status?productId=:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/create-payment"
+  to = "/.netlify/functions/create-payment-intent"
+  status = 200
+

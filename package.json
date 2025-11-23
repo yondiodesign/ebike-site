@@ -10,7 +10,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "stripe": "^14.7.0"
+    "stripe": "^14.7.0",
+    "airtable": "^0.12.2"
   }
 }
 
