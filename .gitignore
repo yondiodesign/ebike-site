@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables
+.env
+.env.local
+
+# Netlify
+.netlify/
+
+# Build files
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Old backup files
+*-old-backup.*
+*og.html
+complete-site.html
+product.html
+checkout.html
+*.md
+
+# Old JavaScript files (already embedded in index.html)
+cart.js
+checkout.js
+script.js
+logo-3d.js
+showcase-carousel.js
+partner-bikes.js
+bike3d.js
+bike3d-nomodule.js
+

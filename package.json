@@ -1,0 +1,16 @@
+{
+  "name": "volt-speed-ebike-shop",
+  "version": "1.0.0",
+  "description": "E-bike shop with Stripe payments",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["ebike", "stripe", "ecommerce"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "stripe": "^14.7.0"
+  }
+}
+
