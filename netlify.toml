@@ -16,15 +16,15 @@
 # Schedule: Check inventory every hour
 # Cron format: minute hour day month weekday
 # "0 * * * *" = Every hour at :00
-[[functions."check-supplier-inventory".schedule]]
-  cron = "0 * * * *"  # Every hour
+[functions.check-supplier-inventory]
+  schedule = "0 * * * *"  # Every hour
 
-# Alternative schedules (comment out the one above and use these):
-# Every 15 minutes: "*/15 * * * *"
-# Every 30 minutes: "*/30 * * * *"
-# Every 2 hours: "0 */2 * * *"
-# Every 6 hours: "0 */6 * * *"
-# Once a day at 9am: "0 9 * * *"
+# Alternative schedules (replace the line above with one of these):
+# Every 15 minutes: schedule = "*/15 * * * *"
+# Every 30 minutes: schedule = "*/30 * * * *"
+# Every 2 hours: schedule = "0 */2 * * *"
+# Every 6 hours: schedule = "0 */6 * * *"
+# Once a day at 9am: schedule = "0 9 * * *"
 
 # Redirect rules (optional)
 [[redirects]]
