@@ -46,7 +46,7 @@ exports.handler = async (event, context) => {
         headers,
         body: JSON.stringify({
           productId: product['Product ID'],
-          inStock: product['In Stock'] !== false, // Default to true if not set
+          inStock: product['In Stock'] === true, // Only in stock if explicitly checked
           availableSupplier: product['Available Supplier'] || 'Unknown',
           lastChecked: product['Last Checked'],
           price: product['Price'],
@@ -63,7 +63,7 @@ exports.handler = async (event, context) => {
     const stockStatus = products.map(record => ({
       productId: record.fields['Product ID'],
       name: record.fields['Name'],
-      inStock: record.fields['In Stock'] !== false,
+      inStock: record.fields['In Stock'] === true,
       availableSupplier: record.fields['Available Supplier'] || 'Unknown',
       lastChecked: record.fields['Last Checked'],
       price: record.fields['Price'],
